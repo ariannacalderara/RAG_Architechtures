@@ -1,4 +1,5 @@
 
+
 ## 📄🤖 Local RAG Architectures for AI Tutoring at WU Vienna
 
 This project explores and compares **three RAG (Retrieval-Augmented Generation) architectures** for querying course-specific academic documents — all running **locally and privately** using Streamlit, ChromaDB, and Ollama.
@@ -20,6 +21,10 @@ This project explores and compares **three RAG (Retrieval-Augmented Generation) 
 ## 🛠️ Environment Setup
 
 Each RAG architecture runs in its own isolated Conda environment to avoid dependency conflicts. All environments use **Python 3.11** and **CPU-only PyTorch**.
+
+> ⚠️ **Important:** Always install `sentence-transformers==2.7.0` and `transformers==4.41.0` together. Newer versions cause a `LRScheduler` / `nn` compatibility error with the current version of ChromaDB.
+
+> ⚠️ **Important:** Always pin `numpy==1.26.4`. Newer versions of numpy cause a `Numpy is not available` error with ChromaDB and sentence-transformers.
 
 ### 🔹 Naive RAG — `envnaive`
 ```bash
