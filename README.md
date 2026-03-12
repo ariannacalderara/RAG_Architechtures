@@ -42,6 +42,7 @@ pip install "sentence-transformers==2.7.0" "transformers==4.41.0"
 pip install "numpy==1.26.4"
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl
 pip install reportlab
+brew install tesseract
 ```
 
 ### 🔬 DeepDoc RAG — `envdeepdoc`
@@ -54,6 +55,7 @@ pip install "numpy==1.26.4"
 conda install -c conda-forge pikepdf llvmlite numba -y
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl "unstructured[pdf]" "unstructured[docx]" "unstructured[pptx]"
 pip install reportlab
+brew install tesseract
 ```
 
 ### 📊 TableBook RAG — `envtablebook`
@@ -65,6 +67,7 @@ pip install "sentence-transformers==2.7.0" "transformers==4.41.0"
 pip install "numpy==1.26.4"
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl pdfplumber
 pip install reportlab
+brew install tesseract
 ```
 
 ---
