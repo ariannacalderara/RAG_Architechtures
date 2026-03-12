@@ -1,3 +1,4 @@
+import streamlit as st
 import chromadb
 from chromadb.utils import embedding_functions
 import requests
@@ -10,7 +11,6 @@ import docx
 from pptx import Presentation
 import pandas as pd
 from datetime import datetime
-import streamlit as st
 
 # ── ReportLab imports for PDF export ──────────────────────────────────────────
 from reportlab.lib.pagesizes import A4
@@ -21,7 +21,7 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
     HRFlowable, PageBreak, KeepTogether
 )
-from reportlab.lib.enums import TA_LEFT, TA_CENTER4
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
 
 TEMP_DIR = "temp_files"
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -36,28 +36,72 @@ MODEL = "tinyllama"
 
 # ── Test questions for Experiment 2 ───────────────────────────────────────────
 TEST_QUESTIONS = [
-    {"id": "Q01", "question": "Summarise the main argument that spans sections 2 and 3 of the lecture notes.", "category": "Chunking"},
-    {"id": "Q02", "question": "What conclusion does the author draw at the end of the document after building up the argument in the earlier sections?", "category": "Chunking"},
-    {"id": "Q03", "question": "What is the value in the third row of the main data table?", "category": "Table Parsing"},
-    {"id": "Q04", "question": "Which category has the highest total across all sheets in the spreadsheet?", "category": "Cross-sheet Reasoning"},
-    {"id": "Q05", "question": "What do the merged header cells in the table represent?", "category": "Table Parsing"},
-    {"id": "Q06", "question": "What does the diagram on slide 4 illustrate?", "category": "Image Blind Spot"},
-    {"id": "Q07", "question": "Describe the figure shown in the scanned PDF page.", "category": "OCR Quality"},
-    {"id": "Q08", "question": "What exact percentage was mentioned for customer satisfaction in 2023?", "category": "Hallucination"},
-    {"id": "Q09", "question": "Who wrote this document and when was it last updated?", "category": "Hallucination"},
-    {"id": "Q10", "question": "What is written in the footnote at the bottom of page 2?", "category": "Layout Parsing"},
-    {"id": "Q11", "question": "Explain the relationship between the two columns of text on the title page.", "category": "Layout Parsing"},
-    {"id": "Q12", "question": "What are the learning objectives listed at the very beginning of chapter 1?", "category": "Retrieval Miss"},
-]
-
-FAILURE_CATEGORIES = [
-    "R — Retrieval Miss",
-    "C — Chunking Break",
-    "T — Table / Format Loss",
-    "I — Image Blind Spot",
-    "H — Hallucination",
-    "L — Layout Error",
-    "O — Other",
+    # ── Q01-02: Chunking — DOCX argument spans multiple sections ─────────────
+    {
+        "id": "Q01",
+        "question": "What are the disadvantages of the Service Center model, and how do they relate to the advantages listed for the same model earlier in the document?",
+        "category": "Chunking"
+    },
+    {
+        "id": "Q02",
+        "question": "The document describes four IT department positioning models. What overall conclusion can be drawn about when to use each model based on the full document?",
+        "category": "Chunking"
+    },
+    # ── Q03-05: Table parsing — Excel with merged headers ────────────────────
+    {
+        "id": "Q03",
+        "question": "What is the definition of the Profit Center model as it appears in the third row of the table in the spreadsheet?",
+        "category": "Table Parsing"
+    },
+    {
+        "id": "Q04",
+        "question": "According to the spreadsheet, what are the advantages of the Investment Center model?",
+        "category": "Table Parsing"
+    },
+    {
+        "id": "Q05",
+        "question": "What do the four column headers of the main table in the spreadsheet represent?",
+        "category": "Table Parsing"
+    },
+    # ── Q06-07: Image blind spot — slides with no extractable text ───────────
+    {
+        "id": "Q06",
+        "question": "What does the Strategic Alignment Model diagram in the slides illustrate?",
+        "category": "Image Blind Spot"
+    },
+    {
+        "id": "Q07",
+        "question": "Describe the visual content of the image-only slide that appears after the Practices of IT Governance slide.",
+        "category": "Image Blind Spot"
+    },
+    # ── Q08-09: Hallucination — facts not present in any document ────────────
+    {
+        "id": "Q08",
+        "question": "What percentage of companies surveyed use the Cost Center model as their primary IT department structure according to the course materials?",
+        "category": "Hallucination"
+    },
+    {
+        "id": "Q09",
+        "question": "What grade did students receive on average for the IT Governance case study assignment in the previous year?",
+        "category": "Hallucination"
+    },
+    # ── Q10-11: Layout parsing — two-column tables in slides PDF ─────────────
+    {
+        "id": "Q10",
+        "question": "According to the minimum baseline of IT governance practices, what Processes are listed alongside the Structures column?",
+        "category": "Layout Parsing"
+    },
+    {
+        "id": "Q11",
+        "question": "What are the Structures, Processes and Relational Mechanisms listed in the Van Grembergen IT governance practices framework in the slides?",
+        "category": "Layout Parsing"
+    },
+    # ── Q12: Retrieval miss — short agenda slide, low embedding similarity ────
+    {
+        "id": "Q12",
+        "question": "What four questions are listed on the IT Governance and Control agenda slide at the start of the course?",
+        "category": "Retrieval Miss"
+    },
 ]
 
 
@@ -72,7 +116,7 @@ def extract_text_from_pdf(file_path):
             chunks.append(page_text)
         else:
             pix = page.get_pixmap(dpi=250)
-            img = Image.open(io.BytesIO(pix.pil_tobytes()))
+            img = Image.open(io.BytesIO(pix.pil_tobytes("png")))
             ocr_text = pytesseract.image_to_string(img).strip()
             if ocr_text:
                 chunks.append(ocr_text)
@@ -255,16 +299,16 @@ def build_failure_pdf(results: list, architecture: str) -> bytes:
         block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
 
         # Retrieved chunks
-        block.append(Paragraph("RETRIEVED CONTEXT CHUNKS", label_style))
-        for j, chunk in enumerate(r["chunks"], 1):
-            source = r["sources"][j-1] if j-1 < len(r["sources"]) else "unknown"
-            block.append(Paragraph(f"<b>Chunk {j}</b> &nbsp; <font color='#888888' size='8'>[{source}]</font>",
-                                   ParagraphStyle("ChunkHead", parent=styles["Normal"], fontSize=9, spaceAfter=2)))
-            preview = chunk[:600] + ("…" if len(chunk) > 600 else "")
+        #block.append(Paragraph("RETRIEVED CONTEXT CHUNKS", label_style))
+        #for j, chunk in enumerate(r["chunks"], 1):
+            #source = r["sources"][j-1] if j-1 < len(r["sources"]) else "unknown"
+            #block.append(Paragraph(f"<b>Chunk {j}</b> &nbsp; <font color='#888888' size='8'>[{source}]</font>",
+                                   #ParagraphStyle("ChunkHead", parent=styles["Normal"], fontSize=9, spaceAfter=2)))
+            #preview = chunk[:600] + ("…" if len(chunk) > 600 else "")
             # Escape XML special chars
-            preview = preview.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            block.append(Paragraph(preview, chunk_style))
-        block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
+            #preview = preview.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            #block.append(Paragraph(preview, chunk_style))
+        #block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
 
         # LLM answer
         block.append(Paragraph("LLM ANSWER", label_style))
