@@ -17,6 +17,13 @@ This project explores and compares **three RAG (Retrieval-Augmented Generation) 
 ⚙️ All three architectures share the **same Streamlit UI, ChromaDB vector store, and Ollama LLM backend**. The key differences lie entirely in how documents are **chunked during ingestion** and how context is **assembled during retrieval**. All file formats supported: `pdf`, `docx`, `pptx`, `txt`, `xlsx`, `xls`.
 
 ---
+## 👀 ChromaDB notes
+The folder chroma_data holds memory, deleting the knowledge base from temp_files is not enough. To lose past memory wipe chroma_data in this way from terminal: 
+1. rm -rf ./chroma_data
+2. mkdir ./chroma_data
+3. python3 -c "import chromadb; chromadb.PersistentClient(path='chroma_data')"
+
+---
 
 ## 🛠️ Environment Setup
 
@@ -34,6 +41,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 pip install "sentence-transformers==2.7.0" "transformers==4.41.0"
 pip install "numpy==1.26.4"
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl
+pip install reportlab
 ```
 
 ### 🔬 DeepDoc RAG — `envdeepdoc`
@@ -45,6 +53,7 @@ pip install "sentence-transformers==2.7.0" "transformers==4.41.0"
 pip install "numpy==1.26.4"
 conda install -c conda-forge pikepdf llvmlite numba -y
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl "unstructured[pdf]" "unstructured[docx]" "unstructured[pptx]"
+pip install reportlab
 ```
 
 ### 📊 TableBook RAG — `envtablebook`
@@ -55,6 +64,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 pip install "sentence-transformers==2.7.0" "transformers==4.41.0"
 pip install "numpy==1.26.4"
 pip install streamlit chromadb pymupdf pytesseract pandas python-docx python-pptx requests openpyxl pdfplumber
+pip install reportlab
 ```
 
 ---
