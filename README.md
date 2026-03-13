@@ -19,10 +19,11 @@ This project explores and compares **three RAG (Retrieval-Augmented Generation) 
 ---
 ## 👀 ChromaDB notes
 The folder chroma_data holds memory, deleting the knowledge base from temp_files is not enough. To lose past memory wipe chroma_data in this way from terminal: 
-1. rm -rf ./chroma_data
-2. mkdir ./chroma_data
-3. python3 -c "import chromadb; chromadb.PersistentClient(path='chroma_data')"
-
+```bash
+rm -rf ./chroma_data
+mkdir ./chroma_data
+python3 -c "import chromadb; chromadb.PersistentClient(path='chroma_data')"
+```
 ---
 
 ## 🛠️ Environment Setup
