@@ -104,16 +104,6 @@ TEST_QUESTIONS = [
     },
 ]
 
-FAILURE_CATEGORIES = [
-    "R — Retrieval Miss",
-    "C — Chunking Break",
-    "T — Table / Format Loss",
-    "I — Image Blind Spot",
-    "H — Hallucination",
-    "L — Layout Error",
-    "O — Other",
-]
-
 
 # ── Extractors ────────────────────────────────────────────────────────────────
 
@@ -246,8 +236,7 @@ def build_failure_pdf(results: list, architecture: str) -> bytes:
 
     meta_data = [
         ["Architecture tested:", architecture],
-        ["Date:", datetime.now().strftime("%d %B %Y")],
-        ["Total cases:", str(len(results))],
+        ["Date:", "17th March 2026"]
     ]
     meta_table = Table(meta_data, colWidths=[5*cm, 10*cm])
     meta_table.setStyle(TableStyle([
@@ -286,9 +275,9 @@ def build_failure_pdf(results: list, architecture: str) -> bytes:
         # Header bar
         header_data = [[
             Paragraph(f"Case {r['id']}", ParagraphStyle("CaseNum", parent=styles["Normal"],
-                      fontSize=13, textColor=colors.white, fontName="Helvetica-Bold")),
-            Paragraph(r["category"], ParagraphStyle("CatLabel", parent=styles["Normal"],
-                      fontSize=10, textColor=colors.HexColor("#ccddff")))
+                      fontSize=13, textColor=colors.white, fontName="Helvetica-Bold"))
+            #Paragraph(r["category"], ParagraphStyle("CatLabel", parent=styles["Normal"],
+                      #fontSize=10, textColor=colors.HexColor("#ccddff")))
         ]]
         header_table = Table(header_data, colWidths=[3*cm, 13.5*cm])
         header_table.setStyle(TableStyle([
@@ -309,16 +298,16 @@ def build_failure_pdf(results: list, architecture: str) -> bytes:
         block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
 
         # Retrieved chunks
-        #block.append(Paragraph("RETRIEVED CONTEXT CHUNKS", label_style))
-        #for j, chunk in enumerate(r["chunks"], 1):
-            #source = r["sources"][j-1] if j-1 < len(r["sources"]) else "unknown"
-            #block.append(Paragraph(f"<b>Chunk {j}</b> &nbsp; <font color='#888888' size='8'>[{source}]</font>",
-                                   #ParagraphStyle("ChunkHead", parent=styles["Normal"], fontSize=9, spaceAfter=2)))
-            #preview = chunk[:600] + ("…" if len(chunk) > 600 else "")
+        block.append(Paragraph("RETRIEVED CONTEXT CHUNKS", label_style))
+        for j, chunk in enumerate(r["chunks"], 1):
+            source = r["sources"][j-1] if j-1 < len(r["sources"]) else "unknown"
+            block.append(Paragraph(f"<b>Chunk {j}</b> &nbsp; <font color='#888888' size='8'>[{source}]</font>",
+                                   ParagraphStyle("ChunkHead", parent=styles["Normal"], fontSize=9, spaceAfter=2)))
+            preview = chunk[:600] + ("…" if len(chunk) > 600 else "")
             # Escape XML special chars
-            #preview = preview.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            #block.append(Paragraph(preview, chunk_style))
-        #block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
+            preview = preview.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            block.append(Paragraph(preview, chunk_style))
+        block.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#dddddd"), spaceAfter=8))
 
         # LLM answer
         block.append(Paragraph("LLM ANSWER", label_style))
