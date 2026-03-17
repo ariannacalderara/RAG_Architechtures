@@ -25,7 +25,18 @@ mkdir ./chroma_data
 python3 -c "import chromadb; chromadb.PersistentClient(path='chroma_data')"
 ```
 ---
+## 🤌 Ollama Connection
+To make the RAG running make sure to connect to Ollama and download the models:
+1. Download Ollama
+2. Pull the model
+3. Run the model
+```bash
+ollama list
+ollama pull tinyllama
+ollama serve
+```
 
+---
 ## 🛠️ Environment Setup
 
 Each RAG architecture runs in its own isolated Conda environment to avoid dependency conflicts. All environments use **Python 3.11** and **CPU-only PyTorch**.
